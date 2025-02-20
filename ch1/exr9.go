@@ -26,7 +26,7 @@ func main() {
 	var vc []int = []int{1, 2, 3, 4, 5, 6}
 
 	var sum, prod int
-	
+
 	sum = getSumOfVectorElements(vc)
 	prod = getProductOfVectorElements(vc)
 
