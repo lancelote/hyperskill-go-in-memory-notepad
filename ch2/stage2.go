@@ -27,7 +27,7 @@ func NewNotesList(cap int) *NotesList {
 	}
 }
 
-func (n NotesList) List() {
+func (n *NotesList) List() {
 	for i, x := range n.notes {
 		fmt.Printf(InfoList, i+1, x)
 	}
