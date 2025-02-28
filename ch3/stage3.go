@@ -2,22 +2,24 @@ package main
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
 )
 
-const DataPrompt = "Enter a command and data: "
-const CapPrompt = "Enter the maximum number of notes: "
+const PromptData = "Enter a command and data: "
+const PromptCap = "Enter the maximum number of notes: "
 
 const ErrorFull = "[Error] Notepad is full"
+const ErrorUnknownCommand = "[Error] Unknown command"
+const ErrorMissingData = "[Error] Missing note argument"
 
 const OkCreated = "[OK] The note was successfully created"
 const OkCleared = "[OK] All notes were successfully deleted"
 
 const InfoList = "[Info] %d: %s\n"
 const InfoExit = "[Info] Bye!"
+const InfoEmpty = "[Info] Notepad is empty"
 
 type NotesList struct {
 	notes []string
@@ -31,68 +33,73 @@ func NewNotesList(cap int) *NotesList {
 	}
 }
 
-func (n *NotesList) List() {
-	for i, x := range n.notes {
-		fmt.Printf(InfoList, i+1, x)
+func (n *NotesList) ExecuteCommand(command, data string) {
+	switch command {
+	case "exit":
+		fmt.Println(InfoExit)
+		os.Exit(0)
+	case "create":
+		n.Create(data)
+	case "list":
+		n.List()
+	case "clear":
+		n.Clear()
+	default:
+		fmt.Println(ErrorUnknownCommand)
 	}
 }
 
-func (n *NotesList) Create(note string) error {
-	if len(n.notes) >= n.cap {
-		return errors.New(ErrorFull)
+func (n *NotesList) List() {
+	if len(n.notes) == 0 {
+		fmt.Println(InfoEmpty)
+	} else {
+		for i, x := range n.notes {
+			fmt.Printf(InfoList, i+1, x)
+		}
 	}
-	n.notes = append(n.notes, note)
-	return nil
+}
+
+func (n *NotesList) Create(note string) {
+	if len(n.notes) >= n.cap {
+		fmt.Println(ErrorFull)
+	} else if strings.TrimSpace(note) == "" {
+		fmt.Println(ErrorMissingData)
+	} else {
+		n.notes = append(n.notes, note)
+		fmt.Println(OkCreated)
+	}
 }
 
 func (n *NotesList) Clear() {
 	n.notes = n.notes[:0]
+	fmt.Println(OkCleared)
 }
 
-func getCap() int {
-	fmt.Print(CapPrompt)
+func GetCap() int {
+	fmt.Print(PromptCap)
 
-	val cap int
+	var cap int
 	fmt.Scan(&cap)
 	return cap
 }
 
-func getCommandData() (string, string) {
-	fmt.Print(DataPrompt)
+func GetCommandData() (string, string) {
+	fmt.Print(PromptData)
 
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
 	input := strings.Split(scanner.Text(), " ")
 	command, data := input[0], strings.Join(input[1:], " ")
-	
+
 	return command, data
 }
 
 func main() {
-	cap := getCap()
+	cap := GetCap()
 	notesList := NewNotesList(cap)
 
 	for {
-		command, data := getCommandData()
-
-		switch command {
-		case "exit":
-			fmt.Println(InfoExit)
-			return
-		case "create":
-			err := notesList.Create(data)
-			if err != nil {
-				fmt.Println(err)
-			} else {
-				fmt.Println(OkCreated)
-			}
-		case "list":
-			notesList.List()
-		case "clear":
-			notesList.Clear()
-			fmt.Println(OkCleared)
-		default:
-			fmt.Println(command + " " + data)
-		}
+		command, data := GetCommandData()
+		notesList.ExecuteCommand(command, data)
 	}
 }
